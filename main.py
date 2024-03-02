@@ -9,6 +9,18 @@ from llama_index.core.tools import QueryEngineTool, ToolMetadata
 from pymilvus import connections
 from llama_index.vector_stores.milvus import MilvusVectorStore
 
+from dotenv import load_dotenv
+import os
+
+# Load environment variables from .env file
+load_dotenv()
+
+openai_api_key = os.getenv('OPENAI_API_KEY')
+
+import openai
+
+openai.api_key = openai_api_key
+
 try:
     storage_context = StorageContext.from_defaults(
         persist_dir="./storage/lyft"
