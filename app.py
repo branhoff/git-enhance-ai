@@ -14,17 +14,37 @@ app = Flask(__name__)
 
 @app.route('/ask', methods=['POST'])
 def ask_question():
-    data = request.json
-    question = data.get('question')
+    # Check if the diff_file is part of the request
+    if 'diff_file' not in request.files:
+        return jsonify({"error": "No diff file part in the request"}), 400
+    file = request.files['diff_file']
 
+    # Check if a file was actually selected and has a filename
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+
+    # Read and decode the diff file content
+    diff_content = file.read().decode('utf-8')
+
+    # Retrieve the question from the form data
+    question = request.form.get('question')
     if not question:
         return jsonify({"error": "No question provided"}), 400
 
     try:
         agent = get_agent()
-        response = agent.chat(question)
+
+        # Combine the diff content with the question for context
+        # Adjust this based on how your agent expects to receive the information
+        full_query = f"Diff Content:\n{diff_content}\n\nQuestion: {question}"
+
+        # Pass the combined content and question to the agent's chat method
+        response = agent.chat(full_query)
+
+        # Return the agent's response
         return jsonify({"response": str(response)}), 200
     except Exception as e:
+        # Handle exceptions and return an error message
         return jsonify({"error": str(e)}), 500
 
 @app.route('/generate-diff', methods=['POST'])
