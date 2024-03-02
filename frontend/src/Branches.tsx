@@ -1,7 +1,10 @@
-import { Box, Button, CircularProgress, FormControl, InputLabel, MenuItem, Paper, Select, Stack, Typography } from '@mui/material';
+import { Box, Button, CircularProgress, FormControl, InputLabel, MenuItem, Select, Stack, Typography } from '@mui/material';
 import {useQuery, useMutation} from '@tanstack/react-query';
 import { useState } from 'react';
 import { DisplayCommit } from './DisplayCommit';
+
+const hostUrl = "http://127.0.0.1:5000";
+
 interface BranchesProps {
     url: string;
 }
@@ -18,13 +21,15 @@ export function Branches(props: BranchesProps) {
       let urlCleaned = props.url;
       if (!urlCleaned || urlCleaned === "")
         throw new Error("Invalid URL! Please enter a URL.");
+      if (urlCleaned.startsWith("git@github.com:"))
+        urlCleaned = urlCleaned.replace("git@github.com:", "https://github.com/");
     // check if the url is a valid url
-    const url1 = new URL(urlCleaned);
-    console.log("URL", url1);
+    // const url1 = new URL(urlCleaned);
+    // console.log("URL", url1);
    
-      if (!urlCleaned.startsWith("https://github.com"))
-      throw new Error("Invalid URL! Only github.com URLs are supported at this time");
-      urlCleaned = props.url.endsWith("/") ? props.url.slice(0, -1) : props.url;
+      // if (!urlCleaned.startsWith("https://github.com"))
+      // throw new Error("Invalid URL! Only github.com URLs are supported at this time");
+      urlCleaned = urlCleaned.endsWith("/") ? urlCleaned.slice(0, -1) : urlCleaned;
       urlCleaned = urlCleaned.endsWith(".git") ? urlCleaned.replace('.git', '') + '/e/e' : urlCleaned;
       
       const [givenUsername, givenRepo, _1, _2] = urlCleaned.split("/").slice(-4);
@@ -44,12 +49,12 @@ export function Branches(props: BranchesProps) {
   const mutation = useMutation<string, Error, string>(
     {
       mutationFn: async (branch: string) => {
-        const response = await fetch('http://127.0.0.1:5000/generate-diff', {
+        const response = await fetch(`${hostUrl}/generate-diff-from-url`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ repo_path: props.url,}),
+          body: JSON.stringify({ git_url: props.url, branch_name: branch}),
         })
         return response.json()
         // return new Promise(resolve => 
@@ -75,7 +80,7 @@ export function Branches(props: BranchesProps) {
   }
 
   if (status === 'error') {
-    return <div>Error: {error.message}</div>
+    return <div>Error: {JSON.stringify(error?.message)}</div>
   }
   /**
    * Return a list of branches
@@ -115,7 +120,7 @@ export function Branches(props: BranchesProps) {
         Generate Commit
       </Button>
       {/* If mutation doesn't return an error, send what it did return to DisplayCommit */}
-      {mutation.isError && <div>Error: {mutation.error.message}</div>}
+      {mutation.isError && <div>Error: {JSON.stringify(mutation?.error?.message)}</div>}
       {mutation.isPending && <Box sx={{
         display: 'flex',
         justifyContent: 'center',
@@ -124,6 +129,6 @@ export function Branches(props: BranchesProps) {
         <CircularProgress />
         </Box>
       }
-     {mutation.isSuccess && <DisplayCommit commit={mutation.data} />}
+     {mutation.isSuccess && <DisplayCommit commit={JSON.stringify(mutation.data)} />}
     </Stack>;
 }
