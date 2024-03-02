@@ -1,2 +1,8 @@
 GitPython
 flask
+llama-index-llms-openai
+llama-index-readers-file
+llama-index
+llama-index-llms-huggingface
+llama-index-vector-stores-milvus
+pymilvus
