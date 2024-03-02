@@ -48,37 +48,39 @@ def generate_diff():
 def generate_diff_from_url():
     data = request.json
     git_url = data.get('git_url')
-    branch_name = data.get('branch_name', 'master')  # Default to master if not provided
+    branch_name = data.get('branch_name', 'master')
+    compare_branch = data.get('compare_branch', 'main')
 
     if not git_url:
         return jsonify({"error": "git_url is required"}), 400
 
     try:
         temp_dir = tempfile.mkdtemp()
-        logging.info(f"Cloning {git_url} into {temp_dir}")
+        logging.info(
+            f"Cloning {git_url} into temporary bare repository at {temp_dir}")
 
-        repo = Repo.clone_from(git_url, temp_dir)
+        repo = Repo.clone_from(git_url, temp_dir, bare=True)
 
-        repo.git.checkout(branch_name)
-        logging.info(f"Checked out branch {branch_name}")
+        logging.info("Fetching all branches")
+        repo.git.fetch('--all')
 
-        diff = repo.git.diff('HEAD~1', 'HEAD')
+        logging.info(
+            f"Generating diff between {compare_branch} and {branch_name}")
+        diff = repo.git.diff(f"{compare_branch}..{branch_name}")
 
-        # Define diff file path for saving the diff from the URL
-        diff_file_path_from_url = 'diff_output_from_url.txt'
-        with open(diff_file_path_from_url, 'w') as file:
-            file.write(diff)
-        logging.info(f"Diff file generated at {diff_file_path_from_url}")
+        diff_file_path = 'diff_output.txt'
+        with open(diff_file_path, 'w') as diff_file:
+            diff_file.write(diff)
+
+        logging.info(f"Diff file generated at {diff_file_path}")
 
         shutil.rmtree(temp_dir)
 
-        # Success response with the path to the diff file
-        return jsonify({"message": f"Diff file generated at {diff_file_path_from_url}"}), 200
+        return jsonify({"message": f"Diff file generated at {diff_file_path}"}), 200
     except Exception as e:
-        # Cleanup in case of exception
+        logging.error(f"Failed to generate diff: {e}")
         if 'temp_dir' in locals():
             shutil.rmtree(temp_dir)
-        logging.error(f"Failed to generate diff: {e}")
         return jsonify({"error": str(e)}), 500
 
 
