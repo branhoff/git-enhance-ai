@@ -86,14 +86,18 @@ query_engine_tools = [
 from llama_index.core.agent import ReActAgent
 from llama_index.llms.openai import OpenAI
 
-llm = OpenAI(model="gpt-3.5-turbo-0613")
+def get_agent():
+    llm = OpenAI(model="gpt-3.5-turbo-0613")
+    agent = ReActAgent.from_tools(
+        query_engine_tools,
+        llm=llm,
+        verbose=True,
+        # context=context
+    )
+    return agent
 
-agent = ReActAgent.from_tools(
-    query_engine_tools,
-    llm=llm,
-    verbose=True,
-    # context=context
-)
-
-response = agent.chat("What was Lyft's revenue growth in 2021?")
-print(str(response))
+# If you have code that should only run when main.py is executed directly, protect it with:
+if __name__ == '__main__':
+    agent = get_agent()
+    response = agent.chat("What was Lyft's revenue growth in 2021?")
+    print(str(response))

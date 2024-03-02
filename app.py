@@ -4,11 +4,28 @@ import tempfile
 import shutil
 import os
 import logging
+from main import get_agent
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
+
+
+@app.route('/ask', methods=['POST'])
+def ask_question():
+    data = request.json
+    question = data.get('question')
+
+    if not question:
+        return jsonify({"error": "No question provided"}), 400
+
+    try:
+        agent = get_agent()
+        response = agent.chat(question)
+        return jsonify({"response": str(response)}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/generate-diff', methods=['POST'])
 def generate_diff():
