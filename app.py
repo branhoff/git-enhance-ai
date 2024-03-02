@@ -66,8 +66,7 @@ def generate_diff_from_url():
 
         logging.info(
             f"Generating diff between {compare_branch} and {branch_name}")
-        diff = repo.git.diff(f'origin/{compare_branch}',
-                             f'origin/{branch_name}')
+        diff = repo.git.diff(f"{compare_branch}..{branch_name}")
 
         diff_file_path = 'diff_output.txt'
         with open(diff_file_path, 'w') as diff_file:
@@ -77,8 +76,7 @@ def generate_diff_from_url():
 
         shutil.rmtree(temp_dir)
 
-        return jsonify({"message": f"Diff file generated at {diff_file_path}",
-                        "diff": diff}), 200
+        return jsonify({"message": f"Diff file generated at {diff_file_path}"}), 200
     except Exception as e:
         logging.error(f"Failed to generate diff: {e}")
         if 'temp_dir' in locals():
