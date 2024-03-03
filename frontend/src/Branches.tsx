@@ -74,7 +74,17 @@ export function Branches(props: BranchesProps) {
         },
         body: JSON.stringify({ git_url: props.url, branch_name: branch }),
       });
-      return response.json();
+      const jj = await response.json();
+      const response2 = await fetch(`${hostUrl}/ask`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ question: `What should the commit message be for this diff? ${
+          jj.diff.slice(0, 500)
+        }` }),
+      });
+      return (await response2.json()).response;
       // return new Promise(resolve =>
       //   setTimeout(() => resolve(`RAndom commit message example
       //   selected for testing, TODO: replace`), 5000)
